@@ -22,3 +22,4 @@ for page in range(1, 51):  # Loop through all 50 pages
         print(f"Availability: {availability}")
         print(f"Rating: {rating}")
         print("-" * 40)
+        
