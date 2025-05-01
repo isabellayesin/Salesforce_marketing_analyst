@@ -1,0 +1,30 @@
+name: TechCrunch API Scraper
+
+on:
+  schedule:
+    - cron: "0 12 * * *"  # Every day at noon UTC
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  scrape-and-save:
+    runs-on: ubuntu-latest
+
+    env:
+      FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run TechCrunch Scraper
+        run: python notebooks/Techcrunch_Web_Scrape_Extract_Load_Raw.py
+
