@@ -24,6 +24,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          
+      - name: Run API script
+        run: |
+          python notebooks/Techcrunch_API_Data_Pipeline.py
+
+
 
       - name: Run TechCrunch Scraper
         run: python notebooks/Techcrunch_Web_Scrape_Extract_Load_Raw.py
