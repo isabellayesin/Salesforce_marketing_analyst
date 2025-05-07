@@ -31,8 +31,8 @@ engine = create_engine(
     f"postgresql+psycopg2://{os.getenv('PG_USER')}:{os.getenv('PG_PASSWORD')}@{os.getenv('PG_HOST')}:{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}"
 )
 
-# Save data to `raw.api_keywords` table
-df.to_sql("api_keywords", schema="raw", con=engine, if_exists="replace", index=False)
+
+df.to_sql("api_keywords", schema="sql_project", con=engine, if_exists="replace", index=False)
 
 df
 
