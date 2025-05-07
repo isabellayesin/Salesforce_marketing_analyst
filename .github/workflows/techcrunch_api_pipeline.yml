@@ -1,9 +1,9 @@
-name: TechCrunch Web Scrape Pipeline
+name: TechCrunch API Pipeline
 
 on:
   schedule:
-    - cron: "0 12 * * *"  # Runs daily at noon UTC
-  workflow_dispatch:      # Allows manual trigger via GitHub UI
+    - cron: "0 12 * * *"
+  workflow_dispatch:
 
 jobs:
   scrape-and-save:
@@ -22,19 +22,14 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          
-      - name: Run API script
-        run: |
-          python notebooks/Techcrunch_API_Data_Pipeline.py
 
-
-
-      - name: Run TechCrunch Scraper
+      - name: Run TechCrunch API Scraper
         env:
           PG_USER: ${{ secrets.PG_USER }}
           PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
           PG_HOST: ${{ secrets.PG_HOST }}
           PG_PORT: ${{ secrets.PG_PORT }}
           PG_DB: ${{ secrets.PG_DB }}
-          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-        run: python notebooks/Techcrunch_Web_Scrape_Extract_Load_Raw.py
+          RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+          RAPID_API_HOST: ${{ secrets.RAPID_API_HOST }}
+        run: python notebooks/Rapid_API_Extract_Load_Raw.py
