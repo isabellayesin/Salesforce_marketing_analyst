@@ -4,12 +4,14 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 API_KEY = os.getenv("FIRECRAWL_API_KEY")
-print(f"Loaded API Key: {API_KEY}")
 
-# Headers for Firecrawl API
+if not API_KEY:
+    raise ValueError("❌ FIRECRAWL_API_KEY not found in environment variables.")
+
+# Set Firecrawl API headers
 headers = {
     "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
@@ -19,39 +21,33 @@ headers = {
 response = requests.post(
     "https://api.firecrawl.dev/v1/scrape",
     headers=headers,
-    json={  # ✅ Only send URL
-        "url": "https://techcrunch.com"
-    }
+    json={"url": "https://techcrunch.com"}
 )
 
-if response.status_code == 200:
-    try:
-        data = response.json()
-        html = data.get("html")
-        print("✅ HTML content successfully retrieved.")
-    except Exception as e:
-        print("❌ Failed to parse JSON.")
-        print("Raw response:", response.text)
-        raise e
+if response.status_code != 200:
+    raise Exception(f"❌ API request failed with status code {response.status_code}:\n{response.text}")
 
-        # Step 2: Parse with BeautifulSoup
-        soup = BeautifulSoup(html, "html.parser")
-        articles = soup.find_all("a", class_="post-block__title__link")
+# Step 2: Parse HTML from Firecrawl response
+data = response.json()
+html = data.get("html")
 
-        if articles:
-            all_articles = []
-            for article in articles:
-                title = article.get_text(strip=True)
-                link = article["href"]
-                print(f"📰 Title: {title}")
-                print(f"🔗 Link: {link}")
-                print("-" * 50)
-                all_articles.append({"Title": title, "Link": link})
+if not html:
+    raise ValueError("❌ HTML content missing from API response.")
 
-            # Step 3: Save to CSV
-            df = pd.DataFrame(all_articles)
-            df.to_csv("techcrunch_articles.csv", index=False)
-            print("✅ Saved to techcrunch_articles.csv")
-        else:
-            print("⚠️ No articles found in the HTML.")
+soup = BeautifulSoup(html, "html.parser")
+articles = soup.find_all("a", class_="post-block__title__link")
 
+if not articles:
+    print("⚠️ No articles found on the page.")
+else:
+    all_articles = []
+    for article in articles:
+        title = article.get_text(strip=True)
+        link = article.get("href", "")
+        all_articles.append({"Title": title, "Link": link})
+
+    df = pd.DataFrame(all_articles)
+    output_path = os.path.join("data", "techcrunch_articles.csv")
+    os.makedirs("data", exist_ok=True)
+    df.to_csv(output_path, index=False)
+    print(f"✅ Saved {len(df)} articles to {output_path}")

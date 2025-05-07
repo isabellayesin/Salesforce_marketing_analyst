@@ -32,4 +32,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run TechCrunch Scraper
-        run: python notebooks/Techcrunch_Web_Scrape_Extract_Load_Raw.py
+        run: python Techcrunch_Web_Scrape_Extract_Load_Raw.py
