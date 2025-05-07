@@ -2,20 +2,12 @@ name: TechCrunch Web Scrape Pipeline
 
 on:
   schedule:
-    - cron: "0 12 * * *"  # Every day at noon UTC
-  workflow_dispatch:      # Allows manual trigger from GitHub UI
+    - cron: "0 12 * * *"  # Runs daily at noon UTC
+  workflow_dispatch:      # Allows manual trigger via GitHub UI
 
 jobs:
   scrape-and-save:
     runs-on: ubuntu-latest
-
-    env:
-      PG_USER: ${{ secrets.PG_USER }}
-      PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
-      PG_HOST: ${{ secrets.PG_HOST }}
-      PG_PORT: ${{ secrets.PG_PORT }}
-      PG_DB: ${{ secrets.PG_DB }}
-      FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
 
     steps:
       - name: Checkout code
@@ -38,4 +30,11 @@ jobs:
 
 
       - name: Run TechCrunch Scraper
+        env:
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_HOST: ${{ secrets.PG_HOST }}
+          PG_PORT: ${{ secrets.PG_PORT }}
+          PG_DB: ${{ secrets.PG_DB }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         run: python notebooks/Techcrunch_Web_Scrape_Extract_Load_Raw.py
