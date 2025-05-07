@@ -32,4 +32,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run TechCrunch Scraper
-        run: python Techcrunch_Web_Scrape_Extract_Load_Raw.py
+        run: python notebooks/Techcrunch_Web_Scrape_Extract_Load_Raw.py
+
+      - name: Upload article CSV
+        uses: actions/upload-artifact@v3
+        with:
+          name: techcrunch-articles
+          path: techcrunch_articles.csv
