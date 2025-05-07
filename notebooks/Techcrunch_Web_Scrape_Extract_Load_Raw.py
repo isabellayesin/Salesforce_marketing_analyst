@@ -24,30 +24,13 @@ response = requests.post(
     json={"url": "https://techcrunch.com"}
 )
 
-if response.status_code != 200:
-    raise Exception(f"❌ API request failed with status code {response.status_code}:\n{response.text}")
+if response.status_code == 200:
+    try:
+        data = response.json()
+        print("🔎 Full API response:", data)
+        html = data.get("html")
+        if not html:
+            raise ValueError("❌ HTML content missing from API response.")
+        print("✅ HTML content successfully retrieved.")
 
-# Step 2: Parse HTML from Firecrawl response
-data = response.json()
-html = data.get("html")
-
-if not html:
-    raise ValueError("❌ HTML content missing from API response.")
-
-soup = BeautifulSoup(html, "html.parser")
-articles = soup.find_all("a", class_="post-block__title__link")
-
-if not articles:
-    print("⚠️ No articles found on the page.")
-else:
-    all_articles = []
-    for article in articles:
-        title = article.get_text(strip=True)
-        link = article.get("href", "")
-        all_articles.append({"Title": title, "Link": link})
-
-    df = pd.DataFrame(all_articles)
-    output_path = os.path.join("data", "techcrunch_articles.csv")
-    os.makedirs("data", exist_ok=True)
-    df.to_csv(output_path, index=False)
-    print(f"✅ Saved {len(df)} articles to {output_path}")
+        # Step 2: Parse HTML from Firecrawl
