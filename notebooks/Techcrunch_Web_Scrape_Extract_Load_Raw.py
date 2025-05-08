@@ -23,48 +23,57 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Step 1: Call Firecrawl
+# Step 1: Try scraping full HTML
 response = requests.post(
     "https://api.firecrawl.dev/v1/scrape",
     headers=headers,
     json={"url": "https://techcrunch.com"}
 )
 
-if response.status_code == 200:
-    try:
-        data = response.json()
-        html = data.get("html")
-        if not html:
-            raise ValueError("❌ HTML content missing from API response.")
-        print("✅ HTML content successfully retrieved.")
+data = response.json()
+html = data.get("html")
 
-        # Step 2: Parse HTML
-        soup = BeautifulSoup(html, "html.parser")
-        articles = soup.find_all("a", class_="post-block__title__link")
+# Step 2: Fallback to extract mode if no HTML is returned
+if not html:
+    print("⚠️ HTML not returned — retrying with extract mode...")
+    response = requests.post(
+        "https://api.firecrawl.dev/v1/scrape",
+        headers=headers,
+        json={
+            "url": "https://techcrunch.com",
+            "options": {
+                "extract": True
+            }
+        }
+    )
+    data = response.json()
+    html = data.get("html") or data.get("content")
 
-        if not articles:
-            print("⚠️ No articles found on the page.")
-        else:
-            all_articles = []
-            for article in articles:
-                title = article.get_text(strip=True)
-                link = article.get("href", "")
-                all_articles.append({"title": title, "link": link})
+if not html:
+    raise ValueError("❌ Neither HTML nor extracted content was returned. Full response:\n" + str(data))
 
-            # Convert to DataFrame
-            df = pd.DataFrame(all_articles)
+# Step 3: Parse with BeautifulSoup
+try:
+    soup = BeautifulSoup(html, "html.parser")
+    articles = soup.find_all("a", class_="post-block__title__link")
 
-            # Step 3: Insert into PostgreSQL (DBeaver connection)
-            engine = create_engine(
-                f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}"
-            )
-            df.to_sql("techcrunch_articles", schema="sql_project", con=engine, if_exists="replace", index=False)
-            print("✅ Articles successfully written to sql_project.techcrunch_articles")
+    if not articles:
+        print("⚠️ No article links found — fallback content may not include HTML structure.")
+        raise ValueError("No valid article links found.")
 
-    except Exception as e:
-        print("❌ An error occurred while processing the response:", e)
+    all_articles = []
+    for article in articles:
+        title = article.get_text(strip=True)
+        link = article.get("href", "")
+        all_articles.append({"title": title, "link": link})
 
-else:
-    print(f"❌ Request failed with status code {response.status_code}")
-    print("Response:", response.text)
+    # Step 4: Write to PostgreSQL
+    df = pd.DataFrame(all_articles)
+    engine = create_engine(
+        f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}"
+    )
+    df.to_sql("techcrunch_articles", schema="sql_project", con=engine, if_exists="replace", index=False)
+    print("✅ Successfully saved articles to sql_project.techcrunch_articles")
 
+except Exception as e:
+    print("❌ Parsing or database write failed:", e)
