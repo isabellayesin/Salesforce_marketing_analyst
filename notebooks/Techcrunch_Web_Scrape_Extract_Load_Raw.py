@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+import markdown as md  # For converting markdown to HTML
 
 # Load environment variables
 load_dotenv()
@@ -23,7 +24,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Step 1: Call Firecrawl
+# Step 1: Call Firecrawl API
 response = requests.post(
     "https://api.firecrawl.dev/v1/scrape",
     headers=headers,
@@ -33,28 +34,33 @@ response = requests.post(
 if response.status_code == 200:
     try:
         data = response.json()
-        html = data.get("html")
-        if not html:
-            raise ValueError("❌ HTML content missing from API response.")
-        print("✅ HTML content successfully retrieved.")
+        print("🔥 Raw API response:", data)
+
+        # Get markdown and convert to HTML
+        markdown = data.get("data", {}).get("markdown")
+        if not markdown:
+            raise ValueError("❌ Markdown content missing from API response.")
+        print("✅ Markdown content successfully retrieved.")
+
+        html = md.markdown(markdown)
 
         # Step 2: Parse HTML
         soup = BeautifulSoup(html, "html.parser")
-        articles = soup.find_all("a", class_="post-block__title__link")
+        articles = soup.find_all("a")
 
         if not articles:
-            print("⚠️ No articles found on the page.")
+            print("⚠️ No articles found in parsed HTML.")
         else:
             all_articles = []
             for article in articles:
                 title = article.get_text(strip=True)
                 link = article.get("href", "")
-                all_articles.append({"title": title, "link": link})
+                if title and link:
+                    all_articles.append({"title": title, "link": link})
 
-            # Convert to DataFrame
             df = pd.DataFrame(all_articles)
 
-            # Step 3: Insert into PostgreSQL (DBeaver connection)
+            # Step 3: Insert into PostgreSQL
             engine = create_engine(
                 f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}"
             )
