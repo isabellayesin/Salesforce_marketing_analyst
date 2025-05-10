@@ -37,12 +37,12 @@ if response.status_code == 200:
         print("🔥 Raw API response:", data)
 
         # Get markdown and convert to HTML
-        markdown = data.get("data", {}).get("markdown")
-        if not markdown:
+        markdown_content = data.get("data", {}).get("markdown")
+        if not markdown_content:
             raise ValueError("❌ Markdown content missing from API response.")
         print("✅ Markdown content successfully retrieved.")
 
-        html = md.markdown(markdown)
+        html = md.markdown(markdown_content)
 
         # Step 2: Parse HTML
         soup = BeautifulSoup(html, "html.parser")
@@ -55,17 +55,27 @@ if response.status_code == 200:
             for article in articles:
                 title = article.get_text(strip=True)
                 link = article.get("href", "")
-                if title and link:
-                    all_articles.append({"title": title, "link": link})
+
+                # Filter out short or irrelevant text
+                if title and link and len(title.split()) > 5 and link.startswith("http"):
+                    all_articles.append({
+                        "title": title,
+                        "link": link
+                    })
 
             df = pd.DataFrame(all_articles)
+
+            # Clean: remove duplicates and unnecessary whitespace
+            df["title"] = df["title"].str.strip()
+            df["link"] = df["link"].str.strip()
+            df = df.drop_duplicates()
 
             # Step 3: Insert into PostgreSQL
             engine = create_engine(
                 f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}"
             )
             df.to_sql("techcrunch_articles", schema="sql_project", con=engine, if_exists="replace", index=False)
-            print("✅ Articles successfully written to sql_project.techcrunch_articles")
+            print("✅ Cleaned articles successfully written to sql_project.techcrunch_articles")
 
     except Exception as e:
         print("❌ An error occurred while processing the response:", e)
