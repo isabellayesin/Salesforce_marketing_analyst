@@ -1,4 +1,4 @@
-name: TechCrunch API Pipeline
+name: Rapid API Pipeline
 
 on:
   schedule:
