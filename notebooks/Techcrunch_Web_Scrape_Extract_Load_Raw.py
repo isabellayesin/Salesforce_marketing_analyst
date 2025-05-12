@@ -90,7 +90,7 @@ if response.status_code == 200:
         engine = create_engine(
             f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}"
         )
-        df.to_sql("techcrunch_articles", schema="public", con=engine, if_exists="replace", index=False)
+        df.to_sql("techcrunch_articles", schema="raw", con=engine, if_exists="replace", index=False)
 
         print("✅ Articles successfully written to sql_project.techcrunch_articles")
 
