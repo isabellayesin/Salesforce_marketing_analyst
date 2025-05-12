@@ -60,7 +60,7 @@ try:
     df["scraped_at"] = datetime.utcnow()
 
     # Load to PostgreSQL
-    df.to_sql("api_keywords", schema="sql_project", con=engine, if_exists="replace", index=False)
+    df.to_sql("api_keywords", schema="public", con=engine, if_exists="replace", index=False)
     print("✅ Cleaned data successfully written to sql_project.api_keywords")
 
 except requests.exceptions.RequestException as e:
