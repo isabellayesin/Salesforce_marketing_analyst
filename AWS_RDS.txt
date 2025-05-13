@@ -1,0 +1,5 @@
+host: isba-dev-02.cipysukaamjj.us-east-1.rds.amazonaws.com
+username: postgres
+password: isba_4715
+schema: sql_project
+port: 5432
